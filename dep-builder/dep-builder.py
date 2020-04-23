@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2018 Yeolar
+# Copyright 2020 Yeolar
 #
 
 import multiprocessing
@@ -69,6 +69,7 @@ def build_dep(root, commit, jobs=multiprocessing.cpu_count()-1):
     with cd(root):
         if commit:
             run('git checkout', commit)
+        run('git pull')
         with cd('build'):
             run('cmake .. && make -j%d' % jobs)
             run('make DESTDIR=../.. install')
