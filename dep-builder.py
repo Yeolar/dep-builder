@@ -7,6 +7,7 @@
 import multiprocessing
 import os
 import subprocess
+import sys
 
 
 def _wrap_with(code):
@@ -47,22 +48,22 @@ class cd(object):
         os.chdir(self.oldpath)
 
 
-def read_deps(f):
-    def parse_dep(line):
-        git, _, commit = line.partition('@')
-        return git, commit
-
+def read_deps(f, *args):
     deps = {}
-    with open(f) as fp:
-        for line in fp.readlines():
-            if not line.startswith('#'):
-                p = parse_dep(line.strip())
-                deps[p[0]] = {
-                    'url': p[0],
-                    'root': p[0].split('/')[-1],
-                    'commit': p[1]
-                }
+    if f != '-':
+        with open(f) as fp:
+            args = fp.readlines()
+    for arg in args:
+        s = arg.strip()
+        if not s.startswith('#'):
+            git, _, commit = s.partition('@')
+            deps[git] = {
+                'url': git,
+                'root': git.split('/')[-1],
+                'commit': commit
+            }
     return deps
+
 
 def build_dep(root, commit, jobs=multiprocessing.cpu_count()-1):
     with cd(root):
@@ -74,10 +75,9 @@ def build_dep(root, commit, jobs=multiprocessing.cpu_count()-1):
 
 
 if __name__ == '__main__':
-    deps = read_deps('deps.conf')
-    with cd('deps'):
-        for dep in deps.itervalues():
-            if not os.path.exists(dep['root']):
-                run('git', 'clone', dep['url'])
-        for dep in deps.itervalues():
-            build_dep(dep['root'], dep['commit'])
+    deps = read_deps(*sys.argv[1:])
+    for dep in deps.itervalues():
+        if not os.path.exists(dep['root']):
+            run('git', 'clone', dep['url'])
+    for dep in deps.itervalues():
+        build_dep(dep['root'], dep['commit'])
