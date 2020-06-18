@@ -57,23 +57,23 @@ def read_deps(f, *args):
         s = arg.strip()
         if not s.startswith('#'):
             git, _, commit = s.partition('@')
-            commit, _, path = commit.partition(':')
+            commit, _, build = commit.partition(':')
             deps.append({
                 'url': git,
                 'root': git.split('/')[-1],
                 'commit': commit,
-                'path': path
+                'build': build or 'cmake -DCMAKE_PREFIX_PATH=../../usr/local ..'
             })
     return deps
 
 
-def build_dep(root, commit, path, jobs=multiprocessing.cpu_count()-1):
+def build_dep(root, commit, build, jobs=multiprocessing.cpu_count()-1):
     with cd(root):
         if commit:
             run('git checkout', commit)
         run('git pull')
         with cd('_build'):
-            run('cmake -DCMAKE_PREFIX_PATH=../../usr/local ../' + path)
+            run(build)
             run('make -j%d' % jobs)
             run('make DESTDIR=../.. install')
 
@@ -84,4 +84,4 @@ if __name__ == '__main__':
         if not os.path.exists(dep['root']):
             run('git', 'clone', dep['url'])
     for dep in deps:
-        build_dep(dep['root'], dep['commit'], dep['path'])
+        build_dep(dep['root'], dep['commit'], dep['build'])
