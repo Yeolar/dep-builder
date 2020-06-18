@@ -49,7 +49,7 @@ class cd(object):
 
 
 def read_deps(f, *args):
-    deps = {}
+    deps = []
     if f != '-':
         with open(f) as fp:
             args = fp.readlines()
@@ -57,11 +57,11 @@ def read_deps(f, *args):
         s = arg.strip()
         if not s.startswith('#'):
             git, _, commit = s.partition('@')
-            deps[git] = {
+            deps.append({
                 'url': git,
                 'root': git.split('/')[-1],
                 'commit': commit
-            }
+            })
     return deps
 
 
@@ -70,15 +70,15 @@ def build_dep(root, commit, jobs=multiprocessing.cpu_count()-1):
         if commit:
             run('git checkout', commit)
         run('git pull')
-        with cd('build'):
+        with cd('_build'):
             run('cmake .. && make -j%d' % jobs)
             run('make DESTDIR=../.. install')
 
 
 if __name__ == '__main__':
     deps = read_deps(*sys.argv[1:])
-    for dep in deps.itervalues():
+    for dep in deps:
         if not os.path.exists(dep['root']):
             run('git', 'clone', dep['url'])
-    for dep in deps.itervalues():
+    for dep in deps:
         build_dep(dep['root'], dep['commit'])
