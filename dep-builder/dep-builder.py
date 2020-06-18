@@ -62,18 +62,20 @@ def read_deps(f, *args):
                 'url': git,
                 'root': git.split('/')[-1],
                 'commit': commit,
-                'build': build or 'cmake -DCMAKE_PREFIX_PATH=../../usr/local ..'
+                'build': build or 'cmake ..'
             })
     return deps
 
 
 def build_dep(root, commit, build, jobs=multiprocessing.cpu_count()-1):
+    path = os.path.join(os.getcwd(), 'usr', 'local')
     with cd(root):
         if commit:
             run('git checkout', commit)
         run('git pull')
         if build.startswith('cmake'):
             with cd('_build'):
+                build = 'cmake -DCMAKE_PREFIX_PATH=' + path + build[5:]
                 run(build)
                 run('make -j%d' % jobs)
                 run('make DESTDIR=../.. install')
