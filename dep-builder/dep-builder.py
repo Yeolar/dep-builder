@@ -72,10 +72,15 @@ def build_dep(root, commit, build, jobs=multiprocessing.cpu_count()-1):
         if commit:
             run('git checkout', commit)
         run('git pull')
-        with cd('_build'):
+        if build.startswith('cmake'):
+            with cd('_build'):
+                run(build)
+                run('make -j%d' % jobs)
+                run('make DESTDIR=../.. install')
+        else:
             run(build)
             run('make -j%d' % jobs)
-            run('make DESTDIR=../.. install')
+            run('make DESTDIR=.. install')
 
 
 if __name__ == '__main__':
