@@ -67,7 +67,7 @@ def read_deps(f, *args):
     return deps
 
 
-def build_dep(root, commit, build, jobs=multiprocessing.cpu_count()-1):
+def build_dep(root, commit, build, jobs=multiprocessing.cpu_count() * 2):
     path = os.path.join(os.getcwd(), 'usr', 'local')
     with cd(root):
         if commit:
