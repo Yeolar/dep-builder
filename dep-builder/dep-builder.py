@@ -48,6 +48,18 @@ class cd(object):
         os.chdir(self.oldpath)
 
 
+TYPE_GIT = 0
+TYPE_ZIP = 1
+TYPE_GZ = 2
+
+def get_type(url):
+    if url.lower().endswith('.tar.gz'):
+        return TYPE_GZ
+    if url.lower().endswith('.zip'):
+        return TYPE_ZIP
+    return TYPE_GIT
+
+
 def read_deps(f, *args):
     deps = []
     if f != '-':
@@ -56,11 +68,14 @@ def read_deps(f, *args):
     for arg in args:
         s = arg.strip()
         if not s.startswith('#'):
-            git, _, commit = s.partition('@')
+            url, _, commit = s.partition('@')
+            type = get_type(url)
             commit, _, build = commit.partition(':')
             deps.append({
-                'url': git,
-                'root': git.split('/')[-1],
+                'raw': s,
+                'type': type,
+                'url': url,
+                'root': url.split('/')[-1],
                 'commit': commit,
                 'build': build or 'cmake ..'
             })
@@ -70,9 +85,10 @@ def read_deps(f, *args):
 def build_dep(root, commit, build, jobs=multiprocessing.cpu_count() * 2):
     path = os.path.join(os.getcwd(), 'usr', 'local')
     with cd(root):
-        if commit:
-            run('git checkout', commit)
-        run('git pull')
+        if commit is not None:
+            if commit:
+                run('git checkout', commit)
+            run('git pull')
         if build.startswith('cmake'):
             with cd('_build'):
                 build = 'cmake -DCMAKE_PREFIX_PATH=' + path + build[5:]
@@ -89,6 +105,21 @@ if __name__ == '__main__':
     deps = read_deps(*sys.argv[1:])
     for dep in deps:
         if not os.path.exists(dep['root']):
-            run('git', 'clone', dep['url'])
+            print 'fetch', white(dep['raw'], True)
+            if dep['type'] == TYPE_GIT:
+                run('git', 'clone', dep['url'])
+            else:
+                run('wget', dep['url'])
     for dep in deps:
-        build_dep(dep['root'], dep['commit'], dep['build'])
+        if dep['type'] != TYPE_GIT and not os.path.exists(dep['commit']):
+            print 'unzip', white(dep['raw'], True)
+            if dep['type'] == TYPE_GZ:
+                run('tar', 'xzf', dep['root'])
+            if dep['type'] == TYPE_ZIP:
+                run('unzip', dep['root'])
+    for dep in deps:
+        print 'build', white(dep['raw'], True)
+        if dep['type'] == TYPE_GIT:
+            build_dep(dep['root'], dep['commit'], dep['build'])
+        else:
+            build_dep(dep['commit'], None, dep['build'])
