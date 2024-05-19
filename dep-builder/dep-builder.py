@@ -14,21 +14,23 @@ CPU_COUNT = multiprocessing.cpu_count()
 
 SHELL_TPL = """#!/bin/sh -x
 
-if [ ! -f %(file)s ]; then
-    wget %(url)s
+if [ ! -f %(kfile)s ]; then
+    wget %(url)s -O %(kfile)s
 fi
 rm -rf %(key)s
 %(extract)s
 cd %(key)s
+mkdir -p %(root)s/usr/local/include
+mkdir -p %(root)s/usr/local/lib
 %(cmds)s
 """
 
 class Dependency(object):
 
     EXTRACT = dict((
-        ('', ''),
-        ('.zip', 'unzip %(file)s'),
-        ('.tar.gz', 'tar xzf %(file)s'),
+        ('.hpp', 'mkdir %(key)s && cp %(kfile)s %(key)s/%(file)s'),
+        ('.zip', 'unzip %(kfile)s'),
+        ('.tar.gz', 'tar xzf %(kfile)s'),
     ))
 
     def __init__(self, first_line):
@@ -36,6 +38,7 @@ class Dependency(object):
         self.sh = self.key + '.sh'
         self.url = url.strip()
         self.file = self.url.split('/')[-1]
+        self.kfile = self.key + '__' + self.file
         self.extract = self.EXTRACT[os.path.splitext(self.file)[1]]
         self.root = ROOT
         self._cmds = []
