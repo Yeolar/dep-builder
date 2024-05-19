@@ -55,6 +55,12 @@ class Dependency(object):
             self._cmds.append('make DESTDIR=%(root)s install')
         elif cmd.startswith('MAKE'):
             self._cmds.append('make -j%d' % CPU_COUNT + cmd[len('MAKE'):])
+        elif cmd.startswith('CP_INC'):
+            self._cmds.append('cp' + cmd[len('CP_INC'):]
+                              + ' %(root)s/usr/local/include/')
+        elif cmd.startswith('CP_LIB'):
+            self._cmds.append('cp' + cmd[len('CP_LIB'):]
+                              + ' %(root)s/usr/local/lib/')
         else:
             self._cmds.append(cmd)
 
