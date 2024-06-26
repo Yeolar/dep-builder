@@ -16,9 +16,9 @@ SHELL_TPL = """#!/bin/sh -x
 
 if [ ! -f %(kfile)s ]; then
     wget %(url)s -O %(kfile)s
+    rm -rf %(key)s
+    %(extract)s
 fi
-rm -rf %(key)s
-%(extract)s
 cd %(key)s
 mkdir -p %(root)s/usr/local/include
 mkdir -p %(root)s/usr/local/lib
@@ -30,7 +30,7 @@ class Dependency(object):
     EXTRACT = dict((
         ('.hpp', 'mkdir %(key)s && cp %(kfile)s %(key)s/%(file)s'),
         ('.zip', 'unzip %(kfile)s'),
-        ('.tar.gz', 'tar xzf %(kfile)s'),
+        ('.gz', 'tar xzf %(kfile)s'),
     ))
 
     def __init__(self, first_line):
