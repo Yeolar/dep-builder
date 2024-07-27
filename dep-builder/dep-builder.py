@@ -16,9 +16,9 @@ SHELL_TPL = """#!/bin/sh -x
 
 if [ ! -f %(kfile)s ]; then
     wget %(url)s -O %(kfile)s
-    rm -rf %(key)s
-    %(extract)s
 fi
+rm -rf %(key)s
+%(extract)s
 cd %(key)s
 mkdir -p %(root)s/usr/local/include
 mkdir -p %(root)s/usr/local/lib
