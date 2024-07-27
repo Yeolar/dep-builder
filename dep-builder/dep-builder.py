@@ -12,7 +12,7 @@ import sys
 ROOT = os.path.dirname(os.path.abspath(__file__))
 CPU_COUNT = multiprocessing.cpu_count()
 
-SHELL_TPL = """#!/bin/sh -x
+SHELL_TPL = """#!/bin/bash -x
 
 if [ ! -f %(kfile)s ]; then
     wget %(url)s -O %(kfile)s
@@ -105,4 +105,4 @@ if __name__ == '__main__':
     if not args.refresh_only:
         for dep in deps:
             if not targets or dep.key in targets:
-                os.system('cd %(root)s && sh -x %(sh)s' % dep.__dict__)
+                os.system('cd %(root)s && bash -x %(sh)s' % dep.__dict__)
